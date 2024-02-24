@@ -1,25 +1,48 @@
-# audiovisual_interconversion_system
-A system that allows the interconversion of audio and visual files using a UI, with adjustment parameters for image and audio properties.
+# Audiovisual_interconversion_system
+Interconvert audio and visual files using a User Interface, with adjustment parameters for image and audio properties.
+![audio visual interconversion](./assets/audio-visual-image.png)
 
-## How to use the program
+## Introduction
+The Audiovisual Interconversion System is a Python-based application that allows users to convert visual and audio files into each other. The system provides a user interface to select input files and adjust parameters for the conversion process.
+
+## Setup
 1. Clone the repository
 ```bash
-git clone <project-url>
+git clone <project_url>
+cd <project_folder>
 ```
-2. Install the required libraries using the following command:
+2. Install the required dependencies using pip. Run the following command in the terminal to install the dependencies from the requirements.txt file:
 ```bash
 pip install -r requirements.txt
 ```
-<br>
 
-The program is now ready to use. Run the following command to start the UI:
+## Usage
+Run the following command to start the UI:
 ```bash
 python app.py
 ```
+The UI will open, allowing users to choose the direction of conversion
+### Image to Sound
+![app interface](./assets/image_to_sound.png)
 
-The UI will open, allowing you to choose the conversion direction, input file, and adjust parameters. After selecting the desired options, click the "Convert" button to start the conversion process.
+OR
+
+### Sound to Image
+![app interface](./assets/file_path.png)
+
+With the file path updated in the UI, users can then adjust the parameters for the conversion, then click the "Convert" button to finally start the conversion process.
+
+An output audio or visual file will be generated based on the selected direction of conversion.
+
+![Output files](./assets/output_files.png)
+
+## Libraries
+- **Pillow**: A Python Imaging Library that adds image processing capabilities to your Python interpreter.
+- **Pydub**: A high-level audio processing library for Python that makes it easy to work with audio files.
+- **Tkinter**: A standard Python interface to the Tk GUI toolkit.
 
 ## System Design and Architecture
+![system architecture](./assets/Audiovisual_interconversion_system.png)
 ### System Blueprint:
 The system is designed to interconvert visual and audio files through a user interface. It supports two main tasks:
 - Image to Audio Conversion
@@ -82,3 +105,23 @@ The architecture consists of three main components:
 ### Conversion Action:
 - Button to initiate the conversion process.
 - Display area for status updates and notifications.
+
+## Footnotes
+You can install extensions for viewing the geenrated audio and image files. I recommend using the following extensions:
+```txt
+For audio files:
+    Name: audio-preview
+    Id: sukumo28.wav-preview
+    Description: play & preview audio file in VS Code. (wav,mp3,ogg,aac,flac,...etc)
+    Version: 2.0.5
+    Publisher: sukumo28
+    VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=sukumo28.wav-preview
+
+- For image files:
+    Name: Image Preview
+    Id: kisstkondoros.vscode-gutter-preview
+    Description: Shows image previews in the gutter and on hover
+    Version: 0.7.0
+    Publisher: kisstkondoros
+    VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=kisstkondoros.vscode-gutter-preview
+```
