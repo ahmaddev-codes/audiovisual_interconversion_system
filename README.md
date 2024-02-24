@@ -10,8 +10,7 @@ The Audiovisual Interconversion System is a Python-based application that allows
 
 ![project URL](./assets/github_screenshot.png)
 
-2. Clone the repository
-Go to the terminal (you can click on the start button of your computer and type `CMD` in the search box). Then run the following commands to clone the repository and navigate to the project folder:
+2. Clone the repository: Go to the terminal (you can click on the start button of your computer and type `CMD` in the search box). Then run the following commands to clone the repository and navigate to the project folder:
 ```bash
 git clone <project_url>
 cd <project_folder>
