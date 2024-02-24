@@ -6,12 +6,17 @@ Interconvert audio and visual files using a User Interface, with adjustment para
 The Audiovisual Interconversion System is a Python-based application that allows users to convert visual and audio files into each other. The system provides a user interface to select input files and adjust parameters for the conversion process.
 
 ## Setup
-1. Clone the repository
+1. In the project page, click on the "Code" button and copy the project URL.
+
+![project URL](./assets/github_screenshot.png)
+
+2. Clone the repository
+Go to the terminal (you can click on the start button of your computer and type `CMD` in the search box). Then run the following commands to clone the repository and navigate to the project folder:
 ```bash
 git clone <project_url>
 cd <project_folder>
 ```
-2. Install the required dependencies using pip. Run the following command in the terminal to install the dependencies from the requirements.txt file:
+3. Install the required dependencies using pip. Run the following command in the terminal to install the dependencies from the requirements.txt file:
 ```bash
 pip install -r requirements.txt
 ```
