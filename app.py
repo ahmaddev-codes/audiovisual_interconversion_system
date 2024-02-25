@@ -193,8 +193,6 @@ class FileConverter:
         saturation = map_audio_property_to_saturation(self.audio_texture_var.get())
         panning = map_color_distribution_to_panning(self.panning_var.get())
 
-        print(f"Brightness: {brightness}, Hue: {hue}, Saturation: {saturation}, Panning: {panning}")
-
         brightness = max(0, min(brightness, 1.0))
         hue = max(0, min(hue, 1.0))
         saturation = max(0, min(saturation, 1.0))
@@ -204,8 +202,6 @@ class FileConverter:
         saturation = min(saturation + 0.2, 1.0)
 
         rgb_color = hsv_to_rgb(hue, saturation, brightness)
-
-        print(f"RGB Color: {rgb_color}")
 
         image_size = 200
         image = Image.new('RGB', (image_size, image_size), rgb_color)
