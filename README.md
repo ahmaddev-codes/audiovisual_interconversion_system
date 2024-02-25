@@ -10,12 +10,15 @@ The Audiovisual Interconversion System is a Python-based application that allows
 
 ![project URL](./assets/github_screenshot.png)
 
-2. Clone the repository: Go to the terminal (you can click on the start button of your computer and type `CMD` in the search box). Then run the following commands to clone the repository and navigate to the project folder:
+2. Go to the terminal (you can click on the start button of your computer and type `CMD` in the search box). Then run the following commands to clone the repository and navigate to the project folder:
 ```bash
 git clone <project_url>
-cd <project_folder>
 ```
-3. Install the required dependencies using pip. Run the following command in the terminal to install the dependencies from the requirements.txt file:
+3. Change your directory to the project name
+```bash
+cd <project_name>
+```
+4. Open up your terminal and Install the required dependencies using pip. Run the following command in the terminal to install the dependencies from the requirements.txt file:
 ```bash
 pip install -r requirements.txt
 ```
