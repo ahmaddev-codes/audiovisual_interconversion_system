@@ -43,6 +43,9 @@ An output audio or visual file will be generated based on the selected direction
 
 ![Output files](./assets/output_files.png)
 
+## Video Guide
+You can watch the video guide on how to use the application
+
 ## Libraries
 - **Pillow**: A Python Imaging Library that adds image processing capabilities to your Python interpreter.
 - **Pydub**: A high-level audio processing library for Python that makes it easy to work with audio files.
