@@ -1,10 +1,15 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from PIL import Image
+from PIL import Image, ImageFilter
 from pydub import AudioSegment
 from pydub.generators import Sine
 from modules.map import *
 from modules.hsv_to_rgb import *
+from modules.rgb_to_hsv import *
+from modules.map import *
+from modules.extract import *
+import hashlib
+
 
 class FileConverter:
     def __init__(self, master):
@@ -73,8 +78,9 @@ class FileConverter:
                     orient="horizontal", length=300).pack(pady=2)
 
         for label, var, from_, to, resolution in scales_config_sound_to_image:
-            tk.Scale(self.sound_to_image_frame, label=label, variable=var, from_=from_, to=to, resolution=resolution,
-                    orient="horizontal", length=300).pack(pady=2)
+            scale = tk.Scale(self.sound_to_image_frame, label=label, variable=var, from_=from_, to=to, resolution=resolution,
+                            orient="horizontal", length=300)
+            scale.pack(pady=2)
 
         self.show_image_to_sound()
 
@@ -112,103 +118,123 @@ class FileConverter:
             tk.messagebox.showinfo("File Selected", "File selected successfully!")
             self.update_file_path_label()
 
-    def extract_audio_texture(self, samples):
-        diff = sum(abs(samples[i] - samples[i-1]) for i in range(1, len(samples)))
-        return diff / (len(samples) - 1) if len(samples) > 1 else 0
-
-    def extract_panning(self, samples):
-        left_channel = samples[::2]
-        right_channel = samples[1::2]
-        panning = sum(right_channel) / sum(left_channel) if sum(left_channel) != 0 else 0
-        return max(-1.0, min(panning, 1.0))
-
-    def extract_audio_properties(self, audio):
-        samples = audio.get_array_of_samples()
-
-        rms_amplitude = sum(x ** 2 for x in samples) / len(samples)
-        volume = rms_amplitude / (2**15)
-
-        frequencies = [i * audio.frame_rate / len(samples) for i in range(len(samples))]
-        spectral_centroid = sum(frequencies[i] * samples[i] for i in range(len(samples))) / sum(samples)
-        frequency = spectral_centroid / (audio.frame_rate / 2)
-
-        audio_texture = self.extract_audio_texture(samples)
-        panning = self.extract_panning(samples)
-
-        return {'volume': volume, 'frequency': frequency, 'audio_texture': audio_texture, 'panning': panning}
-
     def convert_file(self):
+        # Check the mode of conversion
+        mode = self.conversion_mode.get()
+
+        # Update the scales based on the mode
+        self.update_scales()
+
+        # Check if a file is selected
         if not self.file_path:
             messagebox.showwarning("Warning", "Please select a file first!")
             return
 
-        if self.conversion_mode.get() == 0:
+        # Check the conversion mode and call the appropriate conversion method
+        if mode == 0:  # Image to Sound
+            if not self.file_path.endswith((".jpg", ".jpeg", ".png")):
+                messagebox.showwarning("Warning", "Please select a valid image file!")
+                return
             self.image_to_audio_conversion()
-        elif self.conversion_mode.get() == 1:
+        elif mode == 1:  # Sound to Image
+            if not self.file_path.endswith((".mp3", ".wav")):
+                messagebox.showwarning("Warning", "Please select a valid audio file!")
+                return
             self.audio_to_image_conversion()
         else:
             messagebox.showwarning("Warning", "Invalid conversion mode!")
 
+    # ========================================================================================================
+
     def image_to_audio_conversion(self):
         if not self.file_path:
-            messagebox.showwarning("Warning", "Please select a file first!")
+            messagebox.showwarning("Warning", "Please select an image file first!")
             return
 
-        # Map slider values directly to audio properties
+        img = Image.open(self.file_path)
+
+        # Convert image to RGB mode if it's not already in RGB mode
+        if img.mode != "RGB":
+            img = img.convert("RGB")
+
+        width, height = img.size
+
+        duration = min(5000, width * height)  # Duration of the audio (5 seconds or as long as the extracted pixels)
+
+        audio = AudioSegment.silent(duration=duration)
+
+        # Map slider values to audio properties
         volume = map_brightness_to_volume(self.brightness_var.get())
         frequency = map_hue_to_frequency(self.hue_var.get())
         saturation = self.saturation_var.get()
 
-        audio_texture = map_saturation_to_audio_property(saturation)
-        panning = map_panning_to_color_distribution(self.panning_var.get())
-        panning = max(-1.0, min(panning, 1.0))
+        for y in range(height):
+            for x in range(width):
+                pixel = img.getpixel((x, y))
 
-        sine_wave = Sine(freq=frequency)
-        sine_wave = sine_wave.to_audio_segment(duration=2000)
+                # Extract RGB components from the pixel
+                r, g, b = pixel[:3]  # Take the first three components
 
-        audio = (
-            AudioSegment.silent(duration=500)
-            .overlay(sine_wave - volume)
-            .pan(panning)
-            .fade_in(100)
-            .fade_out(100)
-        )
+                # Map color information to audio properties
+                # Normalize to [0, 1]
+                brightness = (r + g + b) / (255 * 3)
+                hue = r / 255
+                panning = (b / 255) * 2 - 1
 
-        audio = audio.set_sample_width(2)
-        audio = audio.set_frame_rate(44100)
-        audio = audio + 10
+                # Apply slider-adjusted values
+                volume_adjusted = volume * brightness
+                frequency_adjusted = frequency * hue
+                panning_adjusted = panning * saturation
 
-        output_path = 'output_audio.mp3'
-        audio.export(output_path, format='mp3')
-        messagebox.showinfo("Audio Generated", f"Audio file generated: {output_path}")
+                sine_wave = Sine(freq=frequency_adjusted * 10000)
+                sine_wave = sine_wave.to_audio_segment(duration=2000)  # Adjust duration
+
+                # Overlay sine wave with adjusted volume and apply panning
+                audio = audio.overlay(sine_wave - volume_adjusted).pan(panning_adjusted)
+
+        audio.export("output.wav", format="wav")
+        messagebox.showinfo("Conversion Complete", "Audio file generated successfully!")
+
+    # ========================================================================================================
 
     def audio_to_image_conversion(self):
-        if not self.file_path:
-            messagebox.showwarning("Warning", "Please select a file first!")
-            return
+        audio = AudioSegment.from_file(self.file_path)
 
-        # Map slider values directly to image properties
-        brightness = map_volume_to_brightness(self.volume_var.get())
-        hue = map_frequency_to_hue(self.frequency_var.get())
-        saturation = map_audio_property_to_saturation(self.audio_texture_var.get())
-        panning = map_color_distribution_to_panning(self.panning_var.get())
+        audio_properties = extract_audio_properties(audio)
 
-        brightness = max(0, min(brightness, 1.0))
-        hue = max(0, min(hue, 1.0))
-        saturation = max(0, min(saturation, 1.0))
+        # Use the current slider values for brightness, hue, saturation, and panning
+        brightness = self.brightness_var.get()
+        hue = self.hue_var.get()
+        saturation = self.saturation_var.get()
+        panning = self.panning_var.get()
 
-        brightness = min(brightness + 0.2, 1.0)
-        hue = min(hue + 0.2, 1.0)
-        saturation = min(saturation + 0.2, 1.0)
+        # Map brightness, hue, and panning to appropriate ranges
+        brightness = map_volume_to_brightness(brightness)
+        hue = map_frequency_to_hue(hue)
+        panning = map_color_distribution_to_panning(panning)
 
-        rgb_color = hsv_to_rgb(hue, saturation, brightness)
+        # Generate a unique color scheme based on the audio file's content
+        hash_value = hashlib.md5(audio.raw_data).hexdigest()
+        hash_as_int = int(hash_value, 16)
+        hue = (hash_as_int % 360) / 360.0  # Map hash value to hue in [0, 1] range
 
-        image_size = 200
-        image = Image.new('RGB', (image_size, image_size), rgb_color)
+        # Convert HSV to RGB
+        rgb = hsv_to_rgb(hue, panning, brightness)
 
-        output_path = 'output_image.png'
-        image.save(output_path)
-        messagebox.showinfo("Image Generated", f"Image file generated: {output_path}")
+        # Create and save the image
+        image = Image.new("RGB", (100, 100), rgb)
+        image = image.filter(ImageFilter.BLUR)
+        image.save("output.jpg")
+
+        messagebox.showinfo("Conversion Complete", "Image file generated successfully!")
+
+    def update_generated_output(self, mode):
+        if mode == 0:  # Image to Sound
+            self.image_to_audio_conversion()
+        elif mode == 1:  # Sound to Image
+            self.audio_to_image_conversion()
+
+    # ========================================================================================================
 
 if __name__ == "__main__":
     root = tk.Tk()
