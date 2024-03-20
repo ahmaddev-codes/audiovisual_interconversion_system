@@ -155,7 +155,7 @@ class FileConverter:
         else:
             messagebox.showwarning("Warning", "Invalid conversion mode!")
 
-    # ========================================================================================================
+    # ========================================================================================
 
     def image_to_audio_conversion(self):
         if not self.file_path:
