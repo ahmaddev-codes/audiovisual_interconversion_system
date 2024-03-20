@@ -37,3 +37,12 @@ def map_color_distribution_to_panning(panning):
     # Map panning to color distribution
     # Normalize panning to the range [-1, 1]
     return (panning + 1) / 2
+
+def map_saturation_to_range(saturation):
+    # Ensure saturation is within the range [0, 1]
+    saturation = max(0, min(1, saturation))
+
+    # Map the saturation value to the range [-1, 1]
+    mapped_saturation = (saturation * 2) - 1
+
+    return mapped_saturation
