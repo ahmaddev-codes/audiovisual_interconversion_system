@@ -264,7 +264,7 @@ class FileConverter:
         rgb = hsv_to_rgb(hue, panning, brightness)
 
         # Create and save the image
-        image = Image.new("RGB", (100, 100), rgb)
+        image = Image.new("RGB", (500, 500), rgb)
         image = image.filter(ImageFilter.BLUR)
         image.save("output.jpg")
 
