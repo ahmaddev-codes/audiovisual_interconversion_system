@@ -105,18 +105,23 @@ class FileConverter:
         self.file_path_label.config(text=f"Selected File: {self.file_path}")
 
     def update_scales(self):
+        # Pack all scales for image to sound conversion
         for scale in self.image_to_sound_frame.winfo_children():
             scale.pack_forget()
+        for scale in self.image_to_sound_frame.winfo_children():
+            scale.pack(pady=2)
 
+        # Pack all scales for sound to image conversion
         for scale in self.sound_to_image_frame.winfo_children():
             scale.pack_forget()
+        for scale in self.sound_to_image_frame.winfo_children():
+            scale.pack(pady=2)
 
-        if self.conversion_mode.get() == 0:
-            for scale in self.image_to_sound_frame.winfo_children():
-                scale.pack(pady=2)
-        else:
-            for scale in self.sound_to_image_frame.winfo_children():
-                scale.pack(pady=2)
+        # Determine which conversion path is active and hide scales accordingly
+        if self.conversion_mode.get() == 0:  # Image to Sound
+            self.sound_to_image_frame.pack_forget()
+        elif self.conversion_mode.get() == 1:  # Sound to Image
+            self.image_to_sound_frame.pack_forget()
 
     def choose_file(self):
         self.file_path = filedialog.askopenfilename(title="Select File")
@@ -171,12 +176,12 @@ class FileConverter:
         # Duration for the first 5 sine waves (in milliseconds)
         # to avoid looping infinitely while reading all the pixels
         duration = 2000 * 5
-        audio = AudioSegment.silent(duration=duration)
+        audio_segments = []
 
         # Map slider values to audio properties
-        volume = self.map_brightness_to_volume(self.brightness_var.get())
-        frequency = self.map_hue_to_frequency(self.hue_var.get())
-        saturation = self.map_saturation_to_range(self.saturation_var.get())
+        volume = map_brightness_to_volume(self.brightness_var.get())
+        frequency = map_hue_to_frequency(self.hue_var.get())
+        saturation = map_saturation_to_range(self.saturation_var.get())
 
         print("Mapped volume:", volume)
         print("Mapped frequency:", frequency)
@@ -206,23 +211,30 @@ class FileConverter:
                 panning_adjusted = panning * saturation
 
                 sine_wave = Sine(freq=frequency_adjusted * 10000)
-                sine_wave = sine_wave.to_audio_segment(duration=10000)
+                sine_wave = sine_wave.to_audio_segment(duration=2000)
 
-                # Overlay sine wave with adjusted volume and apply panning
-                audio = audio.overlay(sine_wave - volume_adjusted).pan(panning_adjusted)
+                # Adjust volume and apply panning
+                sine_wave -= volume_adjusted
+                sine_wave = sine_wave.pan(panning_adjusted)
+
+                # Append the sine wave to the list of audio segments
+                audio_segments.append(sine_wave)
 
                 sine_wave_count += 1
 
-                # Stop after generating 5 sine waves - inner loop
+                # Stop after generating 5 sine waves
                 if sine_wave_count >= 5:
                     break
 
-            # Stop after generating 5 sine waves - outer loop
+            # Stop after generating 5 sine waves
             if sine_wave_count >= 5:
                 break
 
+        # Concatenate all audio segments to form the pattern
+        combined_audio = sum(audio_segments)
+
         # Export the combined audio
-        audio.export("output.wav", format="wav")
+        combined_audio.export("output.wav", format="wav")
         messagebox.showinfo("Conversion Complete", "Audio file generated successfully!")
 
     # ========================================================================================================
