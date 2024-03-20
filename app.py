@@ -108,8 +108,14 @@ class FileConverter:
         for scale in self.image_to_sound_frame.winfo_children():
             scale.pack_forget()
 
+        for scale in self.sound_to_image_frame.winfo_children():
+            scale.pack_forget()
+
         if self.conversion_mode.get() == 0:
             for scale in self.image_to_sound_frame.winfo_children():
+                scale.pack(pady=2)
+        else:
+            for scale in self.sound_to_image_frame.winfo_children():
                 scale.pack(pady=2)
 
     def choose_file(self):
@@ -153,20 +159,31 @@ class FileConverter:
 
         img = Image.open(self.file_path)
 
+        # Downsample the image to reduce processing time
+        img = img.resize((img.width // 2, img.height // 2))
+
         # Convert image to RGB mode if it's not already in RGB mode
         if img.mode != "RGB":
             img = img.convert("RGB")
 
         width, height = img.size
 
-        duration = min(5000, width * height)  # Duration of the audio (5 seconds or as long as the extracted pixels)
-
+        # Duration for the first 5 sine waves (in milliseconds)
+        # to avoid looping infinitely while reading all the pixels
+        duration = 2000 * 5
         audio = AudioSegment.silent(duration=duration)
 
         # Map slider values to audio properties
-        volume = map_brightness_to_volume(self.brightness_var.get())
-        frequency = map_hue_to_frequency(self.hue_var.get())
-        saturation = self.saturation_var.get()
+        volume = self.map_brightness_to_volume(self.brightness_var.get())
+        frequency = self.map_hue_to_frequency(self.hue_var.get())
+        saturation = self.map_saturation_to_range(self.saturation_var.get())
+
+        print("Mapped volume:", volume)
+        print("Mapped frequency:", frequency)
+        print("Mapped Saturation:", saturation)
+
+        # Count for tracking the number of sine waves generated
+        sine_wave_count = 0
 
         for y in range(height):
             for x in range(width):
@@ -179,6 +196,8 @@ class FileConverter:
                 # Normalize to [0, 1]
                 brightness = (r + g + b) / (255 * 3)
                 hue = r / 255
+                audio_texture = g / 255
+                # Normalize to [-1, 1]
                 panning = (b / 255) * 2 - 1
 
                 # Apply slider-adjusted values
@@ -187,11 +206,22 @@ class FileConverter:
                 panning_adjusted = panning * saturation
 
                 sine_wave = Sine(freq=frequency_adjusted * 10000)
-                sine_wave = sine_wave.to_audio_segment(duration=2000)  # Adjust duration
+                sine_wave = sine_wave.to_audio_segment(duration=10000)
 
                 # Overlay sine wave with adjusted volume and apply panning
                 audio = audio.overlay(sine_wave - volume_adjusted).pan(panning_adjusted)
 
+                sine_wave_count += 1
+
+                # Stop after generating 5 sine waves - inner loop
+                if sine_wave_count >= 5:
+                    break
+
+            # Stop after generating 5 sine waves - outer loop
+            if sine_wave_count >= 5:
+                break
+
+        # Export the combined audio
         audio.export("output.wav", format="wav")
         messagebox.showinfo("Conversion Complete", "Audio file generated successfully!")
 
